@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<script type="text/javascript">
+    var spector;
+    var captureOnLoad = false;
+    var captureOffScreen = false;
+    window.__SPECTOR_Canvases = [];
+
+    (function() {
+        var __SPECTOR_Origin_EXTENSION_GetContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.__SPECTOR_Origin_EXTENSION_GetContext = __SPECTOR_Origin_EXTENSION_GetContext;
+
+        if (typeof OffscreenCanvas !== 'undefined') {
+            var __SPECTOR_Origin_EXTENSION_OffscreenGetContext = OffscreenCanvas.prototype.getContext;
+            OffscreenCanvas.prototype.__SPECTOR_Origin_EXTENSION_OffscreenGetContext = __SPECTOR_Origin_EXTENSION_OffscreenGetContext;
+
+            OffscreenCanvas.prototype.getContext = function() {
+                var context = null;
+                if (!arguments.length) {
+                    return context;
+                }
+
+                if (arguments.length === 1) {
+                    context = this.__SPECTOR_Origin_EXTENSION_OffscreenGetContext(arguments[0]);
+                    if (context === null) {
+                        return context;
+                    }
+                } else if (arguments.length === 2) {
+                    context = this.__SPECTOR_Origin_EXTENSION_OffscreenGetContext(arguments[0], arguments[1]);
+                    if (context === null) {
+                        return context;
+                    }
+                }
+
+                var contextNames = ["webgl", "experimental-webgl", "webgl2", "experimental-webgl2"];
+                if (contextNames.indexOf(arguments[0]) !== -1) {
+                    var myEvent = new CustomEvent("SpectorWebGLCanvasAvailableEvent");
+                    document.dispatchEvent(myEvent);
+                    this.id = "Offscreen";
+                    window.__SPECTOR_Canvases.push(this);
+
+                    if (captureOnLoad) {
+                        if (false) {
+                            spector.captureContext(context, 500, false, false);
+                            captureOnLoad = false;
+                        }
+                    }
+                }
+
+                return context;
+            }
+        }
+
+        HTMLCanvasElement.prototype.getContext = function() {
+            var context = null;
+            if (!arguments.length) {
+                return context;
+            }
+
+            if (arguments.length === 1) {
+                context = this.__SPECTOR_Origin_EXTENSION_GetContext(arguments[0]);
+                if (context === null) {
+                    return context;
+                }
+            } else if (arguments.length === 2) {
+                context = this.__SPECTOR_Origin_EXTENSION_GetContext(arguments[0], arguments[1]);
+                if (context === null) {
+                    return context;
+                }
+            }
+
+            var contextNames = ["webgl", "experimental-webgl", "webgl2", "experimental-webgl2"];
+            if (contextNames.indexOf(arguments[0]) !== -1) {
+                context.canvas.setAttribute("__spector_context_type", arguments[0]);
+                var myEvent = new CustomEvent("SpectorWebGLCanvasAvailableEvent");
+                document.dispatchEvent(myEvent);
+
+                if (captureOffScreen) {
+                    var found = false;
+                    for (var i = 0; i < window.__SPECTOR_Canvases.length; i++) {
+                        if (window.__SPECTOR_Canvases[i] === this) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        window.__SPECTOR_Canvases.push(this);
+                    }
+                }
+
+                if (captureOnLoad) {
+
+                    if (this.parentElement || false) {
+                        spector.captureContext(context, 500, false, false);
+                        captureOnLoad = false;
+                    }
+                }
+            }
+
+            return context;
+        }
+    })()
+</script>
+<script id="allow-copy_script">
+    (function agent() {
+        let unlock = false
+        document.addEventListener('allow_copy', (event) => {
+            unlock = event.detail.unlock
+        })
+
+        const copyEvents = [
+            'copy',
+            'cut',
+            'contextmenu',
+            'selectstart',
+            'mousedown',
+            'mouseup',
+            'mousemove',
+            'keydown',
+            'keypress',
+            'keyup',
+        ]
+        const rejectOtherHandlers = (e) => {
+            if (unlock) {
+                e.stopPropagation()
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation()
+            }
+        }
+        copyEvents.forEach((evt) => {
+            document.documentElement.addEventListener(evt, rejectOtherHandlers, {
+                capture: true,
+            })
+        })
+    })()
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="origin-trial" content="Ato09Kwo1q5bGWV5TsBKYESoSL5GyMltMajbmXC7O+qQethuOCZu2XfKDt2bFaYWqyjbWdRQjVXSJm1RyAdsYwEAAABfeyJvcmlnaW4iOiJodHRwczovL2h1bmdraW5nLm9yZzo0NDMiLCJmZWF0dXJlIjoiV2ViR1BVIiwiZXhwaXJ5IjoxNjQzMTU1MTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZX0="
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="https://hungking.org/webgpu-support-test/favicon.ico" type="image/x-icon">
+    <title>矩阵演算测试 with indeex</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #notSupported {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #FFFFFF;
+            text-align: center;
+            margin: auto;
+            white-space: pre-line;
+            padding-top: 100px;
+        }
+        
+        a:visited,
+        a:link {
+            color: #c24747;
+        }
+    </style>
+</head>
+
+<body class="vsc-initialized" cz-shortcut-listen="true" style="position: static;">
+    <div id="notSupported" style="display: none; text-align: center;">
+        <img src="https://hungking.org/webgpu-support-test/favicon.ico" alt="" style="margin: auto;">
+        <br> 抱歉，你的浏览器暂时不支持GPU，可以关注 <a href="https://blog.indeex.club">indeex</a> 关于相关动态。
+    </div>
+    <br>
+    <br> 矩阵维数: <input id="dimension" type="text" value="2048">
+    <button onclick="benchmark()">开始演算</button>
+    <p>状态: <span id="status">CPU已就绪！</span></p>
+    <p>正确性: <span id="correctness"></span></p>
+    <p>GPU 耗时: <span id="gputime">0s</span></p>
+    <p>CPU 耗时: <span id="cputime">0s</span></p>
+
+    <script>
+        if (!navigator.gpu) {
+            document.getElementById("notSupported").style.display = "block";
+        }
+
+        function yieldToBrowser() {
+            return new Promise(function(resolve, reject) {
+                setTimeout(function() {
+                    resolve();
+                }, 0);
+            });
+        }
+
+        async function setStatus(message) {
+            document.getElementById("status").textContent = message;
+            await yieldToBrowser();
+        }
+
+        async function computeOnGPU(matrixA, matrixB, matrixDimension) {
+            await setStatus("GPU准备中或已经失败，可刷新重试");
+
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+
+            const matrixSize = matrixDimension * matrixDimension * 4;
+
+            const gpuMatrixA = device.createBuffer({
+                size: matrixSize,
+                usage: GPUBufferUsage.STORAGE,
+                mappedAtCreation: true
+            });
+
+            new Float32Array(gpuMatrixA.getMappedRange()).set(matrixA);
+            gpuMatrixA.unmap();
+
+            const gpuMatrixB = device.createBuffer({
+                size: matrixSize,
+                usage: GPUBufferUsage.STORAGE,
+                mappedAtCreation: true
+            });
+
+            new Float32Array(gpuMatrixB.getMappedRange()).set(matrixB);
+            gpuMatrixB.unmap();
+
+            const gpuMatrixC = device.createBuffer({
+                size: matrixSize,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+            });
+            const localSize = 8;
+
+            const wgslSource = `
+          [[block]] struct Matrix {
+             data: array<f32>;
+          };
+
+          [[group(0), binding(0)]] var<storage, read> matrixA : Matrix;
+          [[group(0), binding(1)]] var<storage, read> matrixB : Matrix;
+          [[group(0), binding(2)]] var<storage, write> matrixC : Matrix;
+
+          [[stage(compute), workgroup_size(${localSize}, ${localSize})]]
+          fn main([[builtin(global_invocation_id)]] global_id : vec3<u32>) {
+            if (global_id.x >= ${matrixDimension}u || global_id.y >= ${matrixDimension}u) {
+              return;
+            }
+            
+            let resultCell = global_id.xy;
+            let resultIndex = resultCell.y + resultCell.x * ${matrixDimension}u;
+
+            var result : f32 = 0.0;
+            for (var i = 0u; i < ${matrixDimension}u; i = i + 1u) {
+              let aCell = i + resultCell.x * ${matrixDimension}u;
+              let bCell = resultCell.y + i * ${matrixDimension}u;
+              result = result + matrixA.data[aCell] * matrixB.data[bCell];
+            }
+
+            matrixC.data[resultIndex] = result;
+          }`;
+
+            const computePipeline = device.createComputePipeline({
+                compute: {
+                    module: device.createShaderModule({
+                        code: wgslSource
+                    }),
+                    entryPoint: "main"
+                }
+            });
+
+            const bindGroup = device.createBindGroup({
+                layout: computePipeline.getBindGroupLayout(0),
+                entries: [{
+                    binding: 0,
+                    resource: {
+                        buffer: gpuMatrixA
+                    }
+                }, {
+                    binding: 1,
+                    resource: {
+                        buffer: gpuMatrixB
+                    }
+                }, {
+                    binding: 2,
+                    resource: {
+                        buffer: gpuMatrixC
+                    }
+                }]
+            });
+
+            const commandEncoder = device.createCommandEncoder();
+
+            const passEncoder = commandEncoder.beginComputePass();
+            passEncoder.setPipeline(computePipeline);
+            passEncoder.setBindGroup(0, bindGroup);
+            passEncoder.dispatch(
+                Math.ceil(matrixDimension / localSize),
+                Math.ceil(matrixDimension / localSize)
+            );
+            passEncoder.endPass();
+
+            const gpuReadBuffer = device.createBuffer({
+                size: matrixSize,
+                usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+            });
+
+            commandEncoder.copyBufferToBuffer(
+                gpuMatrixC,
+                0,
+                gpuReadBuffer,
+                0,
+                matrixSize
+            );
+
+            await setStatus("正在使用GPU演算，显卡不好可能会卡顿");
+            const timeBefore = window.performance.now();
+
+            const gpuCommands = commandEncoder.finish();
+            device.queue.submit([gpuCommands]);
+
+            await gpuReadBuffer.mapAsync(GPUMapMode.READ);
+            const cpuMatrixC = gpuReadBuffer.getMappedRange();
+
+            const elapsedTime = window.performance.now() - timeBefore;
+            await setStatus("GPU演算完成！");
+
+            const resultArray = new ArrayBuffer(cpuMatrixC.byteLength);
+            const result = new Float32Array(resultArray);
+            result.set(new Float32Array(cpuMatrixC));
+
+            return [result, elapsedTime];
+        }
+
+        async function computeOnCPU(matrixA, matrixB, matrixDimension) {
+            const resultArray = new ArrayBuffer(matrixA.length * 4);
+            const result = new Float32Array(resultArray);
+
+            const timeBefore = window.performance.now();
+            await setStatus("正在使用CPU演算，CPU不好可能会卡顿");
+
+            for (let resultX = 0; resultX < matrixDimension; resultX++) {
+                for (let resultY = 0; resultY < matrixDimension; resultY++) {
+                    let sum = 0.0;
+
+                    for (let i = 0; i < matrixDimension; i++) {
+                        const aCell = i + resultX * matrixDimension;
+                        const bCell = resultY + i * matrixDimension;
+                        sum += matrixA[aCell] * matrixB[bCell];
+                    }
+
+                    const resultCell = resultY + resultX * matrixDimension;
+                    result[resultCell] = sum;
+                }
+
+                if (resultX % 10 === 0) {
+                    await setStatus("CPU 已演算 " + resultX);
+                }
+            }
+
+            const elapsedTime = window.performance.now() - timeBefore;
+            await setStatus("CPU演算完成！");
+
+            return [result, elapsedTime];
+        }
+
+        function randomFloats(elementCount) {
+            const matrix = [];
+            for (let i = 0; i < elementCount; i++) {
+                matrix.push(Math.random() * 10);
+            }
+            return matrix;
+        }
+
+        async function benchmark() {
+            matrixDimension = parseInt(document.getElementById("dimension").value);
+            matrixElements = matrixDimension * matrixDimension;
+            if (matrixDimension > 2048) {
+                alert("不能大于2048！");
+                return;
+            }
+
+            document.getElementById("correctness").textContent = "";
+
+            const matrixA = randomFloats(matrixElements);
+            const matrixB = randomFloats(matrixElements);
+
+            let gpuTimes = [];
+            for (let i = 0; i < 10; i++) {
+                console.log(i);
+                const [gpuResult, gpuTime] = await computeOnGPU(
+                    matrixA,
+                    matrixB,
+                    matrixDimension
+                );
+                document.getElementById("gputime").textContent =
+                    (gpuTime / 1000).toFixed(3) + "s";
+                gpuTimes.push(gpuTime);
+            }
+            const average = arr => arr.reduce((acc, v) => acc + v) / arr.length;
+            console.log((average(gpuTimes) / 1000).toFixed(3));
+
+            const [cpuResult, cpuTime] = await computeOnCPU(
+                matrixA,
+                matrixB,
+                matrixDimension
+            );
+            document.getElementById("cputime").textContent =
+                (cpuTime / 1000).toFixed(3) + "s";
+
+            return;
+
+            await setStatus("演算正确性");
+
+            let correct = true;
+            for (let i = 0; i < matrixElements; i++) {
+                if (Math.abs(1.0 - gpuResult[i] / cpuResult[i]) > 0.00001) {
+                    correct = false;
+                }
+            }
+
+            if (correct) {
+                document.getElementById("correctness").textContent =
+                    "匹配演算！";
+            } else {
+                document.getElementById("correctness").textContent =
+                    "不匹配演算！";
+            }
+            await setStatus("完成");
+        }
+    </script>
+
+
+
+</body>
+
+</html>
