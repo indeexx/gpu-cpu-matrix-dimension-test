@@ -392,6 +392,7 @@
             const matrixB = randomFloats(matrixElements);
 
             let gpuTimes = [];
+            let gts = 0;
             for (let i = 0; i < 10; i++) {
                 console.log(i);
                 const [gpuResult, gpuTime] = await computeOnGPU(
@@ -401,8 +402,11 @@
                 );
                 document.getElementById("gputime").textContent =
                     (gpuTime / 1000).toFixed(3) + "s";
+                gts += gpuTime;
                 gpuTimes.push(gpuTime);
             }
+            document.getElementById("gputime").textContent =
+                    (gts).toFixed(3) + "s";
             const average = arr => arr.reduce((acc, v) => acc + v) / arr.length;
             console.log((average(gpuTimes) / 1000).toFixed(3));
 
