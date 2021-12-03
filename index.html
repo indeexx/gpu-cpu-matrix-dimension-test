@@ -407,7 +407,7 @@
                 );
                 document.getElementById("gputime").textContent =
                     (gpuTime / 1000).toFixed(3) + "s";
-                gts += parseFloat(gpuTime);
+                gts += parseFloat(gpuTime / 1000);
                 gpuTimes.push(gpuTime);
             }
             document.getElementById("gputime").textContent =
